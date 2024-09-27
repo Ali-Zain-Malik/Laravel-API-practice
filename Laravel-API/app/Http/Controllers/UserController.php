@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
@@ -29,7 +32,27 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validator  =   Validator::make($request->all(), [
+            "name"  =>  "required|string|max:128|min:3",
+            "email" =>  "required|email|unique:users",
+            "password"  =>  "required|min:8"
+        ]);
+
+        if($validator->passes())
+        {
+            $user   =   new User();
+            $user->name =   $request->name;
+            $user->email    =   $request->email;
+            $user->password     =   Hash::make($request->password);
+
+            if($user->save())
+            {
+                return response()->json([
+                    "message"   =>  "Account Created Successfully", 
+                    "success"   =>  true
+                ], 200);
+            }
+        }
     }
 
     /**

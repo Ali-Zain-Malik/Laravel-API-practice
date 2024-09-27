@@ -9,3 +9,4 @@ use Illuminate\Support\Facades\Route;
 // })->middleware('auth:sanctum');
 
 Route::get("/index", [UserController::class, "index"]);
+Route::post("/user/store", [UserController::class, "store"]);
