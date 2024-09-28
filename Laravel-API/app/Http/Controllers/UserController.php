@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
+use function Laravel\Prompts\error;
+
 class UserController extends Controller
 {
     /**
@@ -33,16 +35,16 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validator  =   Validator::make($request->all(), [
-            "name"  =>  "required|string|max:128|min:3",
-            "email" =>  "required|email|unique:users",
+            "name"      =>  "required|string|max:128|min:3",
+            "email"     =>  "required|email|unique:users",
             "password"  =>  "required|min:8"
         ]);
 
         if($validator->passes())
         {
-            $user   =   new User();
-            $user->name =   $request->name;
-            $user->email    =   $request->email;
+            $user               =   new User();
+            $user->name         =   $request->name;
+            $user->email        =   $request->email;
             $user->password     =   Hash::make($request->password);
 
             if($user->save())
@@ -52,15 +54,62 @@ class UserController extends Controller
                     "success"   =>  true
                 ], 200);
             }
+            else
+            {
+                return response()->json([
+                    "message"   =>  "Failed to create account. An unexpected error occurred",
+                    "success"   =>  false
+                ], 422);
+            }
+        }
+        else
+        {
+            return response()->json([
+                "success"   =>  false,
+                "errors"    =>  $validator->errors()
+            ], 422); // 422 is used for unprocessable enitity. 
         }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request)
     {
-        //
+        $validator  =   Validator::make($request->all(),
+        [
+            "id"    =>  "required|integer"
+        ]);
+
+        if($validator->passes())
+        {
+            $user_id    =   $request->id;
+            if($user_id)
+            {
+                $user   =   User::find($user_id);
+                if($user)
+                {
+                    return response()->json([
+                        "success"   =>  true,
+                        "user"      =>  $user
+                    ], 200);
+                }
+                else
+                {
+                    return response()->json([
+                        "success"   =>  false,
+                        "message"   =>  "User not found"
+                    ], 404);
+                }
+            }
+        }
+        else
+        {
+            return response()->json([
+                "success"   =>  false,
+                "errors"    =>  $validator->errors()
+            ], 422);
+        }
     }
 
     /**
