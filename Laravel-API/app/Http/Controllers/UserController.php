@@ -125,8 +125,72 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
-    }
+        $idValidator  =   Validator::make(["id" => $id], [
+            "id"    =>  "required|integer"
+        ]);
+
+        // Sometimes rule only checks for the field if it is present in the request.
+        $validator  =   Validator::make($request->all(), [
+            "name"      =>  "sometimes|required|string|max:128|min:3",
+            "email"     =>  "sometimes|required|email|unique:users,email," . $id, // Excluding the current user email
+            "password"  =>  "sometimes|required|min:8"
+        ]);
+        
+        if($idValidator->fails())
+        {
+            return response()->json([
+                "success"   =>  false,
+                "message"   =>  "Invalid ID",
+                "error"     =>  $idValidator->errors()
+            ], 422);
+        }
+
+        $user   =   User::find($id);
+        if(!$user)
+        {
+            return response()->json([
+                "success"   =>  false,
+                "message"   =>  "User not found"
+            ], 404);
+        }
+
+        if($validator->fails())
+        {
+            return response()->json([
+                "success"   =>  false,
+                "message"   =>  "Validation Error",
+                "error"     =>  $validator->errors()
+            ], 422);
+        }
+
+
+        // fill method only update the fields that are present.   
+        $user->fill($request->only(["name", "email", "password"]));
+
+        if($request->has("password"))
+        {
+            $user->password =   Hash::make($request->password);
+        }
+
+        // Checking if any changes have been made using isClean method. This method checks if the 
+        // attributes has remained unchanged or not.
+        if($user->isClean())
+        {
+            return response()->json([
+                "success"   =>  true,
+                "message"   =>  "No changes were made"
+            ], 200);
+        }
+
+
+        if($user->save())
+        {
+            return response()->json([
+                "success"   =>  true,
+                "message"   =>  "User updated successfully",
+            ], 200);
+        }
+    }   
 
     /**
      * Remove the specified resource from storage.
