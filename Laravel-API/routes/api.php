@@ -12,3 +12,4 @@ Route::get("/index", [UserController::class, "index"]);
 Route::post("/user/store", [UserController::class, "store"]);
 Route::get("/user/show", [UserController::class, "show"]);
 Route::post("/user/update/{id}", [UserController::class, "update"]);
+Route::delete("/user/delete/{id}", [UserController::class, "destroy"]);

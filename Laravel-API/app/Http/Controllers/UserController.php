@@ -197,6 +197,34 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $idValidator  =   Validator::make(["id" => $id], [
+            "id"    =>  "required|integer"
+        ]);
+
+        if($idValidator->fails())
+        {
+            return response()->json([
+                "success"   =>  false,
+                "message"   =>  "Invalid ID",
+                "error"     =>  $idValidator->errors()
+            ], 422);
+        }
+
+        $user   =   User::find($id);
+        if(!$user)
+        {
+            return response()->json([
+                "success"   =>  false,
+                "message"   =>  "User not found"
+            ], 404);
+        }
+
+        if($user->delete())
+        {
+            return response()->json([
+                "success"   =>  true,
+                "message"   =>  "User deleted successfully"
+            ], 200);
+        }
     }
 }
