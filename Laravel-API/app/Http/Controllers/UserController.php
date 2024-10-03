@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -42,24 +43,24 @@ class UserController extends Controller
 
         if($validator->passes())
         {
-            $user               =   new User();
-            $user->name         =   $request->name;
-            $user->email        =   $request->email;
-            $user->password     =   Hash::make($request->password);
-
-            if($user->save())
+            DB::beginTransaction();
+            try
             {
+                $user               =   new User();
+                $user->name         =   $request->name;
+                $user->email        =   $request->email;
+                $user->password     =   Hash::make($request->password);
+                $user->save();
+                DB::commit();
                 return response()->json([
                     "message"   =>  "Account Created Successfully", 
                     "success"   =>  true
                 ], 200);
-            }
-            else
+            } 
+            catch (\Exception $e) 
             {
-                return response()->json([
-                    "message"   =>  "Failed to create account. An unexpected error occurred",
-                    "success"   =>  false
-                ], 422);
+                DB::rollBack();
+                throw $e;
             }
         }
         else
